@@ -453,8 +453,8 @@ impl Rfc5322Builder {
     }
 
     #[experimental]
-    pub fn result(&self) -> &String {
-        &self.result
+    pub fn result<'a>(&'a self) -> &'a str {
+        self.result.as_slice()
     }
 
     #[experimental]
@@ -660,7 +660,7 @@ mod tests {
         for test in tests.into_iter() {
             let mut gen = Rfc5322Builder::new();
             gen.emit_folded(test.input);
-            assert_eq!(gen.result(), &test.expected.to_string());
+            assert_eq!(gen.result(), test.expected);
         }
 
     }

@@ -206,7 +206,7 @@ impl MimeMessage {
             builder.emit_raw(format!("--{}--\r\n", self.boundary).as_slice());
         }
 
-        builder.result().clone()
+        builder.result().to_string()
     }
 
     /// Decode the body of this message, as a series of bytes
