@@ -104,7 +104,7 @@ impl<'s> Rfc5322Parser<'s> {
             } else {
                 // Check end of headers as marked by CRLF
                 if !self.eof() && self.peek_linebreak() {
-                    assert!(self.consume_linebreak());
+                    assert!(self.consume_linebreak().is_some());
                 }
 
                 break;
@@ -144,7 +144,7 @@ impl<'s> Rfc5322Parser<'s> {
             self.consume_linear_whitespace();
             let field_value = self.consume_unstructured();
 
-            assert!(self.consume_linebreak());
+            assert!(self.consume_linebreak().is_some());
 
             Some(Header::new(field_name, field_value))
         }
@@ -158,8 +158,9 @@ impl<'s> Rfc5322Parser<'s> {
             if self.peek_linebreak() {
                 // Check for folding whitespace, if it wasn't, then
                 // we're done parsing
-                if !self.consume_folding_whitespace() {
-                    break;
+                match self.consume_folding_whitespace() {
+                    Some(whitespace) => result.push_str(whitespace),
+                    None => break
                 }
             }
 
@@ -176,11 +177,11 @@ impl<'s> Rfc5322Parser<'s> {
     ///
     /// Returns true if whitespace was consume
     #[unstable]
-    pub fn consume_folding_whitespace(&mut self) -> bool {
+    pub fn consume_folding_whitespace<'a>(&'a mut self) -> Option<&'a str> {
         // Remember where we were, in case this isn't folding whitespace
         let current_position = self.pos;
-        let is_fws = if !self.eof() && self.consume_linebreak() {
-            match self.consume_char() {
+        let is_fws = if !self.eof() && self.consume_linebreak().is_some() {
+            match self.peek() {
                 ' ' | '\t' => true,
                 _ => false,
             }
@@ -190,13 +191,14 @@ impl<'s> Rfc5322Parser<'s> {
 
         if is_fws {
             // This was a folding whitespace, so consume all linear whitespace
+            let line_start = self.pos;
             self.consume_linear_whitespace();
+            Some(self.s.slice(line_start, self.pos))  // Capture everything but the linebreak
         } else {
             // Reset back if we didn't see a folding whitespace
             self.pos = current_position;
+            None
         }
-
-        is_fws
     }
 
     /// Consume a word from the input.
@@ -357,9 +359,9 @@ impl<'s> Rfc5322Parser<'s> {
 
     // Consume a linebreak: \r\n, \r or \n
     #[unstable]
-    pub fn consume_linebreak(&mut self) -> bool {
+    pub fn consume_linebreak<'a>(&'a mut self) -> Option<&'a str> {
         if self.eof() {
-            return false;
+            return None;
         }
 
         let start_pos = self.pos;
@@ -370,10 +372,10 @@ impl<'s> Rfc5322Parser<'s> {
                 if !self.eof() && self.peek() == '\n' {
                     self.consume_char();
                 }
-                true
+                Some(self.s.slice(start_pos, self.pos))
             },
-            '\n' => true,
-            _ => { self.pos = start_pos; false }
+            '\n' => Some(self.s.slice(start_pos, self.pos)),
+            _ => { self.pos = start_pos; None }
         }
     }
 
@@ -586,14 +588,14 @@ mod tests {
             MessageTestCase {
                 input: "Folded-Header: Some content that is \r\n\t wrapped with a tab.\r\n\r\nFolding whitespace test",
                 headers: vec![
-                    ("Folded-Header", "Some content that is wrapped with a tab."),
+                    ("Folded-Header", "Some content that is \t wrapped with a tab."),
                 ],
                 body: "Folding whitespace test",
             },
             MessageTestCase {
                 input: "Folded-Header: Some content that is \r\n  wrapped with spaces.\r\n\r\nFolding whitespace test",
                 headers: vec![
-                    ("Folded-Header", "Some content that is wrapped with spaces."),
+                    ("Folded-Header", "Some content that is   wrapped with spaces."),
                 ],
                 body: "Folding whitespace test",
             },
