@@ -1,5 +1,5 @@
-rust-mime
-=========
+rust-email
+==========
 
 [![Build Status](https://travis-ci.org/niax/rust-email.svg?branch=master)](https://travis-ci.org/niax/rust-email)
 
