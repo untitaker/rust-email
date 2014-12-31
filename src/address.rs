@@ -168,7 +168,7 @@ impl<'s> AddressParser<'s> {
             }
 
             self.p.consume_linear_whitespace();
-            if !self.p.eof() && self.p.peek() == ',' {
+            if self.p.peek() == Some(',') {
                 // Clear the separator
                 self.p.consume_char();
             }
@@ -183,17 +183,17 @@ impl<'s> AddressParser<'s> {
         let name = self.p.consume_phrase(false);
 
         if name.is_some() {
-            if !self.p.eof() && self.p.peek() != ':' {
+            if self.p.peek() != Some(':') {
                 None
             } else {
                 self.p.consume_char();
-                while !self.p.eof() && self.p.peek() != ';' {
+                while !self.p.eof() && self.p.peek() != Some(';') {
                     match self.parse_mailbox() {
                         Some(mbox) => mailboxes.push(mbox),
                         None => {},
                     }
 
-                    if !self.p.eof() && self.p.peek() == ',' {
+                    if self.p.peek() == Some(',') {
                         self.p.consume_char();
                     }
                 }
@@ -228,10 +228,10 @@ impl<'s> AddressParser<'s> {
         let display_name = self.p.consume_phrase(false);
         self.p.consume_linear_whitespace();
         // Find angle-addr
-        if !self.p.eof() && self.p.peek() == '<' {
+        if self.p.peek() == Some('<') {
             self.p.consume_char();
             let addr = self.parse_addr_spec();
-            if self.p.consume_char() != '>' {
+            if self.p.consume_char() != Some('>') {
                 // Fail because we should have a closing RANGLE here (to match the opening one)
                 None
             } else {
@@ -249,7 +249,7 @@ impl<'s> AddressParser<'s> {
     fn parse_addr_spec(&mut self) -> Option<String> {
         // local-part is a phrase, but allows dots in atoms
         let local_part = self.p.consume_phrase(true);
-        if self.p.eof() || self.p.consume_char() != '@' {
+        if self.p.consume_char() != Some('@') {
             None
         } else {
             let domain = self.parse_domain();

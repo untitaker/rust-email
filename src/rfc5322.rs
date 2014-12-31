@@ -133,7 +133,7 @@ impl<'s> Rfc5322Parser<'s> {
         // Parse field-name
         let field_name = self.consume_while(|c| { c.is_ftext() });
         self.consume_linear_whitespace();
-        if field_name.len() == 0 || self.eof() || self.peek() != ':' {
+        if field_name.len() == 0 || self.peek() != Some(':') {
             // Fail to parse if we didn't see a field, we're at the end of input
             // or we haven't just seen a ":"
             self.pos = last_pos;
@@ -175,14 +175,14 @@ impl<'s> Rfc5322Parser<'s> {
     ///
     /// This is a CRLF followed by one or more whitespace character.
     ///
-    /// Returns true if whitespace was consume
+    /// Returns Some(whitespace) if whitespace was consumed
     #[unstable]
     pub fn consume_folding_whitespace<'a>(&'a mut self) -> Option<&'a str> {
         // Remember where we were, in case this isn't folding whitespace
         let current_position = self.pos;
-        let is_fws = if !self.eof() && self.consume_linebreak().is_some() {
+        let is_fws = if self.consume_linebreak().is_some() {
             match self.peek() {
-                ' ' | '\t' => true,
+                Some(' ') | Some('\t') => true,
                 _ => false,
             }
         } else {
@@ -210,15 +210,19 @@ impl<'s> Rfc5322Parser<'s> {
     /// If `allow_dot_atom` is true, then `atom` can be a `dot-atom` in this phrase.
     #[unstable]
     pub fn consume_word(&mut self, allow_dot_atom: bool) -> Option<String> {
-        if self.peek() == '"' {
-            // Word is a quoted string
-            self.consume_quoted_string()
-        } else if self.peek().is_atext() {
-            // Word is an atom.
-            self.consume_atom(allow_dot_atom)
-        } else {
-            // Is not a word!
-            None
+        match self.peek() {
+            Some('"') => {
+                // Word is a quoted string
+                self.consume_quoted_string()
+            },
+            Some(c) if c.is_atext() => {
+                // Word is an atom.
+                self.consume_atom(allow_dot_atom)
+            },
+            _ => {
+                // Is not a word!
+                None
+            }
         }
     }
 
@@ -235,15 +239,19 @@ impl<'s> Rfc5322Parser<'s> {
 
         while !self.eof() {
             self.consume_linear_whitespace();
-            let word = if self.peek() == '"' {
-                // Word is a quoted string
-                self.consume_quoted_string()
-            } else if self.peek().is_atext() {
-                self.consume_atom(allow_dot_atom)
-            } else {
-                // If it's not a quoted string, or an atom, it's no longer
-                // in a phrase, so stop.
-                break
+            let word = match self.peek() {
+                Some('"') => {
+                    // Word is a quoted string
+                    self.consume_quoted_string()
+                },
+                Some(c) if c.is_atext() => {
+                    self.consume_atom(allow_dot_atom)
+                },
+                _ => {
+                    // If it's not a quoted string, or an atom, it's no longer
+                    // in a phrase, so stop.
+                    break
+                }
             };
 
             if word.is_some() {
@@ -282,7 +290,7 @@ impl<'s> Rfc5322Parser<'s> {
     /// Consume a quoted string from the input
     #[unstable]
     pub fn consume_quoted_string(&mut self) -> Option<String> {
-        if self.peek() != '"' {
+        if self.peek() != Some('"') {
             // Fail if we were called wrong
             None
         } else {
@@ -291,26 +299,27 @@ impl<'s> Rfc5322Parser<'s> {
             let mut terminated = false;
             // Consume the leading "
             self.consume_char();
-            while !terminated && !self.eof() {
+            while !terminated {
                 match self.peek() {
-                    '\\' if !inside_escape => {
+                    Some('\\') if !inside_escape => {
                         // If we were not already being escaped, consume the
                         // escape character and mark that we're being escaped.
                         self.consume_char();
                         inside_escape = true;
                     },
-                    '"' if !inside_escape => {
+                    Some('"') if !inside_escape => {
                         // If this is a DQUOTE and we haven't seen an escape character,
                         // consume it and mark that we should break from the loop
                         self.consume_char();
                         terminated = true;
                     },
-                    _ => {
+                    Some(_) => {
                         // Any old character gets pushed in
-                        quoted_string.push(self.consume_char());
+                        quoted_string.push(self.consume_char().unwrap());
                         // Clear any escape character state we have
                         inside_escape = false;
                     },
+                    None => break
                 }
             }
 
@@ -329,12 +338,12 @@ impl<'s> Rfc5322Parser<'s> {
     /// atext character.
     #[unstable]
     pub fn consume_atom(&mut self, allow_dot: bool) -> Option<String> {
-        if !self.peek().is_atext() {
-            None
-        } else {
-            Some(self.consume_while(|c| {
+        match self.peek() {
+            Some(c) if !c.is_atext() => { None },
+            Some(_) => Some(self.consume_while(|c| {
                 c.is_atext() || (allow_dot && c == '.')
-            }))
+            })),
+            _ => None
         }
     }
 
@@ -347,14 +356,14 @@ impl<'s> Rfc5322Parser<'s> {
     /// Consume a single character from the input.
     #[inline]
     #[unstable]
-    pub fn consume_char(&mut self) -> char {
-        if self.eof() { 
-            // TODO: Consider making this return an Option<char>
-            panic!("Consuming beyond end of input");
+    pub fn consume_char(&mut self) -> Option<char> {
+        if self.eof() {
+            None
+        } else {
+            let ch_range = self.s.char_range_at(self.pos);
+            self.pos = ch_range.next;
+            Some(ch_range.ch)
         }
-        let ch_range = self.s.char_range_at(self.pos);
-        self.pos = ch_range.next;
-        ch_range.ch
     }
 
     // Consume a linebreak: \r\n, \r or \n
@@ -367,14 +376,14 @@ impl<'s> Rfc5322Parser<'s> {
         let start_pos = self.pos;
 
         match self.consume_char() {
-            '\r' => {
+            Some('\r') => {
                 // Try to consume a single \n following the \r
-                if !self.eof() && self.peek() == '\n' {
+                if self.peek() == Some('\n') {
                     self.consume_char();
                 }
                 Some(self.s.slice(start_pos, self.pos))
             },
-            '\n' => Some(self.s.slice(start_pos, self.pos)),
+            Some('\n') => Some(self.s.slice(start_pos, self.pos)),
             _ => { self.pos = start_pos; None }
         }
     }
@@ -383,7 +392,7 @@ impl<'s> Rfc5322Parser<'s> {
     #[unstable]
     pub fn peek_linebreak(&mut self) -> bool {
         match self.peek() {
-            '\r' | '\n' => true,
+            Some('\r') | Some('\n') => true,
             _ => false
         }
     }
@@ -399,19 +408,24 @@ impl<'s> Rfc5322Parser<'s> {
     #[unstable]
     pub fn consume_while<F: Fn(char) -> bool>(&mut self, test: F) -> String {
         let start_pos = self.pos;
-        while !self.eof() && test(self.peek()) {
-            self.consume_char();
+        loop {
+            match self.peek() {
+                Some(c) if test(c) => { self.consume_char(); },
+                _ => { break }
+            }
         }
         self.s[start_pos..self.pos].to_string()
     }
 
     /// Peek at the current character.
-    ///
-    /// Note that this does not do any bounds checking.
     #[inline]
     #[unstable]
-    pub fn peek(&self) -> char {
-        self.s.char_at(self.pos)
+    pub fn peek(&self) -> Option<char> {
+        if self.eof() {
+            None
+        } else {
+            Some(self.s.char_at(self.pos))
+        }
     }
 
     /// Returns true if we have reached the end of the input.

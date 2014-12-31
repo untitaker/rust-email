@@ -49,13 +49,13 @@ impl<'s> Rfc2045Parser<'s> {
         let mut params = HashMap::new();
         while !self.parser.eof() {
             // Eat the ; and any whitespace
-            assert_eq!(self.parser.consume_char(), ';');
+            assert_eq!(self.parser.consume_char(), Some(';'));
             self.parser.consume_linear_whitespace();
 
             let attribute = self.consume_token();
-            assert_eq!(self.parser.consume_char(), '=');
+            assert_eq!(self.parser.consume_char(), Some('='));
             // Value can be token or quoted-string
-            let value = if self.parser.peek() == '"' {
+            let value = if self.parser.peek() == Some('"') {
                 self.parser.consume_quoted_string()
             } else {
                 self.consume_token()

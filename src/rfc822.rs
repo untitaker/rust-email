@@ -66,11 +66,11 @@ impl<'s> Rfc822DateParser<'s> {
 
     fn consume_time(&mut self) -> Option<(u32, u32, u32)> {
         let hour = self.consume_u32();
-        if !self.parser.eof() && self.parser.peek() == ':' {
+        if self.parser.peek() == Some(':') {
             self.parser.consume_char();
             let minute = self.consume_u32();
             // Seconds are optional, only try to parse if we see the next seperator.
-            let second = if !self.parser.eof() && self.parser.peek() == ':' {
+            let second = if self.parser.peek() == Some(':') {
                 self.parser.consume_char();
                 self.consume_u32()
             } else {
