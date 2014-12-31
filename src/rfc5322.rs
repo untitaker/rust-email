@@ -452,7 +452,7 @@ impl Rfc5322Builder {
     pub fn emit_folded(&mut self, s: &str) {
        let mut pos = 0us;
        let mut cur_len = 0us;
-       let mut last_space = 0us;
+       let mut last_whitespace = 0us;
        let mut last_cut = 0us;
 
        while pos < s.len() {
@@ -460,25 +460,30 @@ impl Rfc5322Builder {
            let c = c_range.ch;
 
            match c {
-               ' ' => { last_space = pos; },
-               '\r' => { cur_len = 0; },
-               '\n' => { cur_len = 0; },
+               ' ' | '\t' => { last_whitespace = pos; },
+               '\r' | '\n' => { cur_len = 0; last_whitespace = 0; },
                _ => {},
            }
 
+           // TODO: Don't allow generation of all-whitespace lines. Only update last_whitespace
+           // if we've seen a non-whitespace character in the current line.
+
            cur_len += 1;
            // We've reached our line length, so
-           if cur_len >= MIME_LINE_LENGTH && last_space > 0 {
+           if cur_len >= MIME_LINE_LENGTH && last_whitespace > 0 {
                // Emit the string from the last place we cut it to the
-               // last space that we saw
-               self.emit_raw(&s[last_cut..last_space]);
+               // last whitespace that we saw
+               self.emit_raw(&s[last_cut..last_whitespace]);
+               // Find the character following the last whitespace
+               let after_whitespace = s.char_range_at(last_whitespace).next;
                // ... and get us ready to put out the continuation
-               self.emit_raw("\r\n\t");
+               self.emit_raw("\r\n");
+               self.emit_raw(s.slice(last_whitespace, after_whitespace));
 
                // Reset our counters
-               cur_len = 0;
-               last_cut = s.char_range_at(last_space).next;
-               last_space = 0;
+               cur_len = after_whitespace - last_whitespace;
+               last_cut = after_whitespace;
+               last_whitespace = 0;
            }
 
            pos = c_range.next;
@@ -630,14 +635,11 @@ mod tests {
         let tests = vec![
             BuildFoldTest {
                 input: "A long line that should get folded on a space at some point around here, possibly at this point.",
-                expected: "A long line that should get folded on a space at some point around here,\r\n\
-                \tpossibly at this point.",
+                expected: "A long line that should get folded on a space at some point around here,\r\n possibly at this point.",
             },
             BuildFoldTest {
                 input: "A long line that should get folded on a space at some point around here, possibly at this point. And yet more content that will get folded onto another line.",
-                expected: "A long line that should get folded on a space at some point around here,\r\n\
-                \tpossibly at this point. And yet more content that will get folded onto another\r\n\
-                \tline.",
+                expected: "A long line that should get folded on a space at some point around here,\r\n possibly at this point. And yet more content that will get folded onto another\r\n line.",
             },
         ];
 
