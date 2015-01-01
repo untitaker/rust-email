@@ -177,7 +177,7 @@ impl<'s> Rfc5322Parser<'s> {
     ///
     /// Returns Some(whitespace) if whitespace was consumed
     #[unstable]
-    pub fn consume_folding_whitespace<'a>(&'a mut self) -> Option<&'a str> {
+    pub fn consume_folding_whitespace(&mut self) -> Option<&str> {
         // Remember where we were, in case this isn't folding whitespace
         let current_position = self.pos;
         let is_fws = if self.consume_linebreak().is_some() {
@@ -368,7 +368,7 @@ impl<'s> Rfc5322Parser<'s> {
 
     // Consume a linebreak: \r\n, \r or \n
     #[unstable]
-    pub fn consume_linebreak<'a>(&'a mut self) -> Option<&'a str> {
+    pub fn consume_linebreak(&mut self) -> Option<&str> {
         if self.eof() {
             return None;
         }
@@ -453,7 +453,7 @@ impl Rfc5322Builder {
     }
 
     #[experimental]
-    pub fn result<'a>(&'a self) -> &'a str {
+    pub fn result(&self) -> &str {
         self.result.as_slice()
     }
 
