@@ -50,12 +50,21 @@ impl<'s> Rfc2045Parser<'s> {
         let mut params = HashMap::new();
         while !self.parser.eof() {
             // Eat the ; and any whitespace
-            assert_eq!(self.parser.consume_char(), Some(';'));
+            self.parser.consume_linear_whitespace();
+            match self.parser.consume_char() {
+                Some(';') => {},
+                None => break,
+                _ => break  // TODO: Report error (unused trailing characters)
+            }
             self.parser.consume_linear_whitespace();
 
             let attribute = self.consume_token().map(ToOwned::to_owned);
 
-            assert_eq!(self.parser.consume_char(), Some('='));
+            match self.parser.consume_char() {
+                Some('=') => {},
+                None => break,
+                _ => break  // TODO: Report error (not a token)
+            }
             // Value can be token or quoted-string
             let value = if self.parser.peek() == Some('"') {
                 self.parser.consume_quoted_string()
@@ -67,7 +76,7 @@ impl<'s> Rfc2045Parser<'s> {
                 (Some(attrib), Some(val)) => {
                     params.insert(attrib, val);
                 },
-                _ => {}
+                _ => {}  // TODO: Report error (attr was not token or value was not token/quoted)
             }
         }
 
@@ -119,6 +128,14 @@ mod tests {
                     ("baz", "qux"),
                 ]),
                 name: "Multiple values",
+            },
+
+            ParserTestCase {
+                input: "foo/bar; foo=bar; ",
+                output: ("foo/bar", vec![
+                    ("foo", "bar"),
+                ]),
+                name: "Basic value with trailing separator",
             },
         ];
 
