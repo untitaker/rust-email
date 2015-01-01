@@ -1,6 +1,7 @@
 //! Module for dealing with RFC2045 style headers.
 use super::rfc5322::Rfc5322Parser;
 
+use std::borrow::ToOwned;
 use std::collections::HashMap;
 
 /// Parser over RFC 2045 style headers.
@@ -21,7 +22,7 @@ impl<'s> Rfc2045Parser<'s> {
         }
     }
 
-    fn consume_token(&mut self) -> Option<String> {
+    fn consume_token(&mut self) -> Option<&str> {
         let token = self.parser.consume_while(|c| {
             match c {
                 // Not any tspecials
@@ -43,8 +44,8 @@ impl<'s> Rfc2045Parser<'s> {
     /// over parameters to values.
     #[stable]
     pub fn consume_all(&mut self) -> (String, HashMap<String, String>) {
-        let value = self.parser.consume_while(|c| { c != ';' });
- 
+        let value = self.parser.consume_while(|c| { c != ';' }).to_string();
+
         // Find the parameters
         let mut params = HashMap::new();
         while !self.parser.eof() {
@@ -52,13 +53,14 @@ impl<'s> Rfc2045Parser<'s> {
             assert_eq!(self.parser.consume_char(), Some(';'));
             self.parser.consume_linear_whitespace();
 
-            let attribute = self.consume_token();
+            let attribute = self.consume_token().map(ToOwned::to_owned);
+
             assert_eq!(self.parser.consume_char(), Some('='));
             // Value can be token or quoted-string
             let value = if self.parser.peek() == Some('"') {
                 self.parser.consume_quoted_string()
             } else {
-                self.consume_token()
+                self.consume_token().map(ToOwned::to_owned)
             };
 
             match (attribute, value) {

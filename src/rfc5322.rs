@@ -1,4 +1,5 @@
 //! Module with helpers for dealing with RFC 5322
+use std::borrow::ToOwned;
 
 use super::header::{Header, HeaderMap};
 use super::rfc2047::decode_rfc2047;
@@ -131,7 +132,7 @@ impl<'s> Rfc5322Parser<'s> {
     pub fn consume_header(&mut self) -> Option<Header> {
         let last_pos = self.pos;
         // Parse field-name
-        let field_name = self.consume_while(|c| { c.is_ftext() });
+        let field_name = self.consume_while(|c| { c.is_ftext() }).to_string();
         self.consume_linear_whitespace();
         if field_name.len() == 0 || self.peek() != Some(':') {
             // Fail to parse if we didn't see a field, we're at the end of input
@@ -217,7 +218,7 @@ impl<'s> Rfc5322Parser<'s> {
             },
             Some(c) if c.is_atext() => {
                 // Word is an atom.
-                self.consume_atom(allow_dot_atom)
+                self.consume_atom(allow_dot_atom).map(ToOwned::to_owned)
             },
             _ => {
                 // Is not a word!
@@ -245,7 +246,7 @@ impl<'s> Rfc5322Parser<'s> {
                     self.consume_quoted_string()
                 },
                 Some(c) if c.is_atext() => {
-                    self.consume_atom(allow_dot_atom)
+                    self.consume_atom(allow_dot_atom).map(ToOwned::to_owned)
                 },
                 _ => {
                     // If it's not a quoted string, or an atom, it's no longer
@@ -337,7 +338,7 @@ impl<'s> Rfc5322Parser<'s> {
     /// If `allow_dot` is true, then also allow '.' to be considered as an
     /// atext character.
     #[unstable]
-    pub fn consume_atom(&mut self, allow_dot: bool) -> Option<String> {
+    pub fn consume_atom(&mut self, allow_dot: bool) -> Option<&str> {
         match self.peek() {
             Some(c) if !c.is_atext() => { None },
             Some(_) => Some(self.consume_while(|c| {
@@ -406,7 +407,7 @@ impl<'s> Rfc5322Parser<'s> {
     /// Returns the string of characters that returned true for the test function.
     #[inline]
     #[unstable]
-    pub fn consume_while<F: Fn(char) -> bool>(&mut self, test: F) -> String {
+    pub fn consume_while<F: Fn(char) -> bool>(&mut self, test: F) -> &str {
         let start_pos = self.pos;
         loop {
             match self.peek() {
@@ -414,7 +415,7 @@ impl<'s> Rfc5322Parser<'s> {
                 _ => { break }
             }
         }
-        self.s[start_pos..self.pos].to_string()
+        &self.s[start_pos..self.pos]
     }
 
     /// Peek at the current character.

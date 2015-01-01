@@ -1,3 +1,4 @@
+use std::borrow::ToOwned;
 use std::fmt;
 use std::str::FromStr;
 
@@ -263,7 +264,7 @@ impl<'s> AddressParser<'s> {
 
     fn parse_domain(&mut self) -> Option<String> {
         // TODO: support domain-literal
-        self.p.consume_atom(true)
+        self.p.consume_atom(true).map(ToOwned::to_owned)
     }
 }
 
