@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `MimeMultipartType` enum in crate `email`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, MimeMultipartType">
+
+    <title>email::MimeMultipartType - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='index.html'>email</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='mimeheaders/index.html' title=''>mimeheaders</a><a class='mod ' href='rfc2045/index.html' title='Module for dealing with RFC2045 style headers.'>rfc2045</a><a class='mod ' href='rfc2047/index.html' title='Module for decoding RFC 2047 strings'>rfc2047</a><a class='mod ' href='rfc5322/index.html' title='Module with helpers for dealing with RFC 5322'>rfc5322</a><a class='mod ' href='rfc822/index.html' title=''>rfc822</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.Header.html' title='Represents an RFC 822 Header'>Header</a><a class='struct ' href='struct.HeaderIter.html' title=''>HeaderIter</a><a class='struct ' href='struct.HeaderMap.html' title='A collection of Headers'>HeaderMap</a><a class='struct ' href='struct.MimeMessage.html' title='Represents a MIME message'>MimeMessage</a></div><div class='block enum'><h2>Enums</h2><a class='enum ' href='enum.Address.html' title='Represents an RFC 5322 Address'>Address</a><a class='enum current' href='enum.MimeMultipartType.html' title='Marks the type of a multipart message'>MimeMultipartType</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.FromHeader.html' title='Trait for converting from RFC822 Header values into Rust types.'>FromHeader</a><a class='trait ' href='trait.ToFoldedHeader.html' title='Trait for converting from a Rust time into a Header value that handles its own folding.'>ToFoldedHeader</a><a class='trait ' href='trait.ToHeader.html' title='Trait for converting from a Rust type into a Header value.'>ToHeader</a></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>email</a>::<wbr><a class='enum' href=''>MimeMultipartType</a><wbr><a class='stability Stable' title=''>Stable</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-6063' href='../src/email/message.rs.html#20-40'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum MimeMultipartType {
+    Mixed,
+    Alternate,
+    Digest,
+    Parallel,
+}</pre><div class='docblock'><p>Marks the type of a multipart message</p>
+</div><h2 class='variants'>Variants</h2>
+<table><tr><td id='variant.Mixed'><a class='stability Unstable' title='Unstable'></a><code>Mixed</code></td><td><div class='docblock'><p>Entries which are independent.</p>
+
+<p>This value is the default.</p>
+
+<p>As defined by Section 5.1.3 of RFC 2046</p>
+</div></td></tr><tr><td id='variant.Alternate'><a class='stability Unstable' title='Unstable'></a><code>Alternate</code></td><td><div class='docblock'><p>Entries which are interchangeable, such that the system can choose
+whichever is &quot;best&quot; for its use.</p>
+
+<p>As defined by Section 5.1.4 of RFC 2046</p>
+</div></td></tr><tr><td id='variant.Digest'><a class='stability Unstable' title='Unstable'></a><code>Digest</code></td><td><div class='docblock'><p>Entries are (typically) a collection of messages.</p>
+
+<p>As defined by Section 5.1.5 of RFC 2046</p>
+</div></td></tr><tr><td id='variant.Parallel'><a class='stability Unstable' title='Unstable'></a><code>Parallel</code></td><td><div class='docblock'><p>Entry order does not matter, and could be displayed simultaneously.</p>
+
+<p>As defined by Section 5.1.6 of RFC 2046</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unstable' title='Unstable'></a><code>impl <a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a></code></h3><div class='impl-items'><h4 id='method.from_content_type' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.from_content_type' class='fnname'>from_content_type</a>(ct: <a class='type' href='../email/mimeheaders/type.MimeContentType.html' title='email::mimeheaders::MimeContentType'>MimeContentType</a>) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a>&gt;</code></h4>
+<div class='docblock'><p>Returns the appropriate <code>MimeMultipartType</code> for the given MimeContentType</p>
+</div><h4 id='method.to_content_type' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.to_content_type' class='fnname'>to_content_type</a>(&amp;self) -&gt; <a class='type' href='../email/mimeheaders/type.MimeContentType.html' title='email::mimeheaders::MimeContentType'>MimeContentType</a></code></h4>
+<div class='docblock'><p>Returns a MimeContentType that represents this multipart type.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a></code></h3><div class='impl-items'></div><h3 class='impl'><a class='stability Unstable' title='Unstable: I/O and core have yet to be reconciled'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><a class='stability Unstable' title='Unstable: I/O and core have yet to be reconciled'></a><code>fn <a href='#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../email/enum.MimeMultipartType.html' title='email::MimeMultipartType'>MimeMultipartType</a></code></h3><div class='impl-items'><h4 id='method.assert_receiver_is_total_eq' class='tymethod'><a class='stability Unstable' title='Unstable'></a><code>fn <a href='#tymethod.assert_receiver_is_total_eq' class='fnname'>assert_receiver_is_total_eq</a>(&amp;self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "email";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>
