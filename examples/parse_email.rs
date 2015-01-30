@@ -1,7 +1,7 @@
 extern crate email;
 
-use email::{MimeMessage, Header, Address};
-use std::io::File;
+use email::MimeMessage;
+use std::old_io::File;
 use std::os;
 
 fn main() {
